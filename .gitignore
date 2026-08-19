@@ -3,4 +3,3 @@ __pycache__/
 runs/
 uploaded_videos/
 *.pyc
-*.pt
