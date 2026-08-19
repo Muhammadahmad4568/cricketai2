@@ -11,7 +11,7 @@ from google import genai
 #      treat it as compromised regardless of anything below —
 #      regenerate/revoke it in Google's console today. Going
 #      forward, the key is read from the GEMINI_API_KEY
-#      environment variable (or Streamlit secrets — see app.py)
+#      environment variable (or Streamlit secrets — see below)
 #      and is never written into source.
 #
 #   2. BUG FIX: your app.py already calls
@@ -23,9 +23,36 @@ from google import genai
 #      argument. When app.py passes the CURRENT video's real
 #      technique/shot/sync data, the coach answers from that
 #      instead of the old hardcoded ANALYSIS_CONTEXT example data.
+#
+#   3. STREAMLIT CLOUD FIX: on Streamlit Cloud, secrets are set
+#      through the app's "Secrets" panel (TOML format), not a
+#      shell environment variable — `export`/`setx` only works
+#      locally. This now also checks st.secrets as a fallback, so
+#      the same code works whether the key was set as a real env
+#      var (local dev) or as a Streamlit Cloud secret (deployed).
 # ============================================================
 
-API_KEY = os.environ.get("GEMINI_API_KEY")
+
+def _get_api_key():
+    """Checks a real environment variable first, then falls back to
+    Streamlit's secrets manager (how keys are actually set on
+    Streamlit Cloud). Never hardcoded."""
+
+    key = os.environ.get("GEMINI_API_KEY")
+    if key:
+        return key
+
+    try:
+        import streamlit as st
+        return st.secrets.get("GEMINI_API_KEY")
+    except Exception:
+        # st.secrets raises if no secrets.toml exists at all (e.g. running
+        # this file outside Streamlit, like the CLI test mode below) —
+        # that's fine, just means no key is available from that source.
+        return None
+
+
+API_KEY = _get_api_key()
 
 _client = None
 

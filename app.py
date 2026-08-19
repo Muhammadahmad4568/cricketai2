@@ -154,6 +154,19 @@ def badge(label):
     return f'<span class="badge {css_class}">{label}</span>'
 
 
+def gemini_key_available():
+    """Checks a real environment variable first, then Streamlit secrets —
+    matches chatbot.py's own resolution so the sidebar status and the
+    actual chatbot behavior never disagree with each other."""
+
+    if os.environ.get("GEMINI_API_KEY"):
+        return True
+    try:
+        return bool(st.secrets.get("GEMINI_API_KEY"))
+    except Exception:
+        return False
+
+
 def load_csv_safe(path):
     if not path or not os.path.exists(path):
         return pd.DataFrame()
@@ -299,7 +312,7 @@ with st.sidebar:
     st.caption("Computer Vision")
     st.caption("Pose Estimation " + ("✅" if os.path.exists(POSE_MODEL_PATH) else "⚠️ model missing"))
     st.caption("Ball Detection " + ("✅" if os.path.exists(BALL_MODEL_PATH) else "⚠️ model missing"))
-    st.caption("Gemini AI " + ("✅" if os.environ.get("GEMINI_API_KEY") else "⚠️ GEMINI_API_KEY not set"))
+    st.caption("Gemini AI " + ("✅" if gemini_key_available() else "⚠️ GEMINI_API_KEY not set"))
 
 
 # ============================================================
@@ -493,6 +506,10 @@ elif page == "🎥 Video Analysis":
                 'open normally in VLC or any desktop player.</div>',
                 unsafe_allow_html=True,
             )
+            reencode_reason = (results.get("errors") or {}).get("video_reencode")
+            if reencode_reason:
+                with st.expander("Why did this happen?"):
+                    st.code(reencode_reason, language=None)
 
         st.video(final_video)
         st.success("This is the generated analysis video — not the raw upload.")
@@ -759,10 +776,11 @@ elif page == "🤖 AI Cricket Coach":
     </div>
     """, unsafe_allow_html=True)
 
-    if not os.environ.get("GEMINI_API_KEY"):
+    if not gemini_key_available():
         st.markdown(
-            '<div class="warn-box">⚠️ <code>GEMINI_API_KEY</code> is not set as an environment variable. '
-            'Set it before launching Streamlit (see setup notes) — the coach can\'t answer without it.</div>',
+            '<div class="warn-box">⚠️ <code>GEMINI_API_KEY</code> is not set (as an environment '
+            'variable locally, or as a Streamlit Cloud secret when deployed) — the coach can\'t '
+            'answer without it.</div>',
             unsafe_allow_html=True,
         )
 
