@@ -1,6 +1,6 @@
 streamlit
 pandas
-numpy
+numpy<2
 scipy
 imageio-ffmpeg
 google-genai
