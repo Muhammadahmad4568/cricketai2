@@ -1,8 +1,16 @@
 streamlit
-ultralytics
-opencv-python-headless
 pandas
 numpy
 scipy
 imageio-ffmpeg
 google-genai
+ultralytics
+
+# opencv-python-headless MUST be listed AFTER ultralytics.
+# ultralytics pulls in regular opencv-python as its own dependency,
+# and both packages install into the same "cv2" folder — whichever
+# installs LAST wins. Putting headless last here forces it to
+# overwrite ultralytics' opencv-python, so libGL.so.1 (which only
+# the non-headless build needs, and which Streamlit Cloud's server
+# doesn't have) is never required.
+opencv-python-headless
