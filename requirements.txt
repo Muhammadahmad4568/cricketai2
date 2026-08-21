@@ -1,8 +1,21 @@
 streamlit
 pandas
+
+# Pinned below 2.0 for ABI compatibility with the pinned opencv build below.
 numpy<2
+
 scipy
 imageio-ffmpeg
 google-genai
 ultralytics
-opencv-python-headless==4.8.1.78
+
+# opencv-python-headless pinned. 4.5.5.64 (the previous attempt) predates
+# Python 3.12 wheel builds entirely, so pip cannot install it on this
+# Streamlit Cloud runtime (Python 3.12) — that is almost certainly the
+# actual cause of the last install failure, not the glib issue.
+# 4.9.0.80 is the oldest headless build with official Python 3.12 wheels
+# available, so it's the earliest version we can actually pin here.
+# Must stay listed AFTER ultralytics: ultralytics pulls in regular
+# opencv-python as a dependency, and whichever opencv package installs
+# LAST wins, since both write into the same "cv2" folder.
+opencv-python-headless==4.9.0.80
